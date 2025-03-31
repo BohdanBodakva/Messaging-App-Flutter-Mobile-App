@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:messaging_app/handlers/date_time.dart';
+import 'package:messaging_app/handlers/text_code_interpret.dart';
 import 'package:messaging_app/models/chat.dart';
 import 'package:messaging_app/models/message.dart';
 import 'package:messaging_app/models/user.dart';
@@ -706,16 +707,39 @@ class ChatMessageItem extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                               color: isMyMessage ? Colors.white : Colors.black,
                               fontSize: 14,
+                              backgroundColor: Color.fromARGB(255, 51, 51, 51),
                             ),
                           ),
                         ),
-                      SelectableText(
-                        message.text!,
-                        style: TextStyle(
-                          color: isMyMessage ? Colors.white : Colors.black87,
-                          fontSize: 16,
-                        ),
-                      ),
+                      ...splitTextAndCode(message.text!).map((part) {
+                        if (part.containsKey("code")) {
+                          return Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(8),
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.black87,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: SelectableText(
+                              part["code"]!,
+                              style: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 14,
+                                color: Colors.greenAccent,
+                              ),
+                            ),
+                          );
+                        } else {
+                          return SelectableText(
+                            part["text"]!,
+                            style: TextStyle(
+                              color: isMyMessage ? Colors.white : Colors.black87,
+                              fontSize: 16,
+                            ),
+                          );
+                        }
+                      }),
                       Align(
                         alignment: Alignment.bottomRight,
                         child: Padding(
