@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:messaging_app/handlers/date_time.dart';
+import 'package:messaging_app/handlers/encrypt_messages.dart';
 import 'package:messaging_app/handlers/messages.dart';
 import 'package:messaging_app/handlers/shared_prefs.dart';
 import 'package:messaging_app/handlers/websocket.dart';
@@ -17,6 +18,8 @@ import 'package:provider/provider.dart';
 import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:socket_io_client/socket_io_client.dart';
+import 'dart:typed_data';
+import 'dart:convert';
 
 class ChatListPage extends StatefulWidget  {
 
@@ -153,6 +156,8 @@ class ChatListPageState extends State<ChatListPage> with WidgetsBindingObserver 
   void _performSocketConnection() {
     (() async {
       await _connectToSocket();
+
+      await generateKeyPair(socket);
     })();
   }
 
@@ -164,6 +169,10 @@ class ChatListPageState extends State<ChatListPage> with WidgetsBindingObserver 
 
     socket.on('validate_token_error', navigateToLogin);
     socket.on('load_user_error', navigateToLogin);
+
+    socket.on("exchange_keys", (data) {
+      serverPublicKey = data["server_public_key"];
+    });
 
     socket.on('validate_token', (data) {
       final newUserId = int.parse(data['user_id'].toString());
@@ -200,8 +209,10 @@ class ChatListPageState extends State<ChatListPage> with WidgetsBindingObserver 
       }
     });
 
-    socket.on("send_message_chat_list", (data) {
+    socket.on("send_message_chat_list", (data) async {
       final message = Msg.Message.fromJson(data['message']);
+      message.text = decryptText(Uint8List.fromList(utf8.encode(message.text!)));
+
       final chat = Chat.fromJson(data['chat']);
       final userThatSend = User.fromJson(data['user_that_send']);
       final room = data['room'];
@@ -553,6 +564,7 @@ class ChatListPageState extends State<ChatListPage> with WidgetsBindingObserver 
       socket.off("create_chat");
       socket.off("create_group_chat_list");
       socket.off("load_user_error");
+      socket.off("exchange_keys");
 
       if (!socket.connected) {
         socket.connect();
@@ -588,6 +600,7 @@ class ChatListPageState extends State<ChatListPage> with WidgetsBindingObserver 
     socket.off("create_chat");
     socket.off("create_group_chat_list");
     socket.off("load_user_error");
+    socket.off("exchange_keys");
 
     if (socket.connected) {
       socket.disconnect();

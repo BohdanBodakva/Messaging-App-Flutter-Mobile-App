@@ -8,7 +8,6 @@ import 'package:messaging_app/services/hash_service.dart';
 import 'package:messaging_app/widgets/error_message.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
-import 'package:crypto/crypto.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, User? currentUser, setCurrentUser});

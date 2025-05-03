@@ -58,5 +58,8 @@
     "isTyping": "пише",
     "clearChatHistory": "Видалити історію чату",
     "clearChatHistoryConfrimMessage": "Ви справді хочете очистити історію чату?",
-    "clear": "Очистити"
+    "clear": "Очистити",
+    "start": "Почати",
+    "chatSummary": "Підсумок чату",
+    "lastMessages": "К-сть повідомлень"
 }

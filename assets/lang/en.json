@@ -58,5 +58,8 @@
     "isTyping": "is typing",
     "clearChatHistory": "Clear Chat History",
     "clearChatHistoryConfrimMessage": "Are you sure you want to clear chat history?",
-    "clear": "Clear"
+    "clear": "Clear",
+    "start": "Start",
+    "chatSummary": "Chat Summary",
+    "lastMessages": "Last messages"
 }

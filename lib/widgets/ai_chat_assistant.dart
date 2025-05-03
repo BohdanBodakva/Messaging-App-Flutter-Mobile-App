@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:messaging_app/providers/language_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
 class CounterPopup extends StatefulWidget {
@@ -46,6 +48,8 @@ class _CounterPopupState extends State<CounterPopup> {
     double wordCount = textController.text.split(RegExp(r'\s+')).length.toDouble();
     double progress = (wordCount / 20).clamp(0.0, 1.0);
 
+    var languageProvider = Provider.of<LanguageProvider>(context);
+
     return Center(
       child: Container(
         width: MediaQuery.of(context).size.width * 0.7,
@@ -63,13 +67,13 @@ class _CounterPopupState extends State<CounterPopup> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'AI Assistant',
+                  languageProvider.localizedStrings['chatSummary'] ?? 'Chat Summary',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 SizedBox(height: 10),
 
-                Text("Value: $counter", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                Text("${languageProvider.localizedStrings['chalastMessagestSummary'] ?? 'last messages'}: $counter", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -102,7 +106,7 @@ class _CounterPopupState extends State<CounterPopup> {
                     padding: EdgeInsets.symmetric(vertical: 14),
                     textStyle: TextStyle(fontSize: 16),
                   ),
-                  child: Text('Close Assistant'),
+                  child: Text(languageProvider.localizedStrings['start'] ?? 'Start'),
                 ),
               ],
             ),

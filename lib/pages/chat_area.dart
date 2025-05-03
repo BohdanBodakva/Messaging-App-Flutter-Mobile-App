@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:messaging_app/handlers/date_time.dart';
+import 'package:messaging_app/handlers/encrypt_messages.dart';
 import 'package:messaging_app/handlers/text_code_interpret.dart';
 import 'package:messaging_app/models/chat.dart';
 import 'package:messaging_app/models/message.dart';
@@ -12,6 +13,9 @@ import 'package:messaging_app/providers/language_provider.dart';
 import 'package:messaging_app/widgets/ai_chat_assistant.dart';
 import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart';
+import 'dart:typed_data';
+import 'dart:convert';
+import 'dart:typed_data';
 
 class ChatPage extends StatefulWidget {
   final Chat chat;
@@ -104,6 +108,9 @@ class ChatPageState extends State<ChatPage> {
     }
     
     _loadChatHistory();
+
+    print("KEY 2222222222222222222: ${serverPublicKey}");
+    print("KEY 3333333333333333333: ${keyPair!.publicKey}");
   }
 
   _loadChatHistory(){
@@ -188,6 +195,8 @@ class ChatPageState extends State<ChatPage> {
 
     widget.socket.on('send_message', (data) {
       final message = Message.fromJson(data['message']);
+      message.text = decryptText(Uint8List.fromList(utf8.encode(message.text!)));
+
       final room = data['room'];
 
       User newUser = currentUserChatPage!.deepCopy();
@@ -257,6 +266,8 @@ class ChatPageState extends State<ChatPage> {
     });
 
     loadHistoryOffset += itemsCount;
+
+    
   }
 
   int? _selectedDeleteIndex;
@@ -288,18 +299,24 @@ class ChatPageState extends State<ChatPage> {
           "chat_id": currentChat!.id
         }); 
       } else {
-        widget.socket.emit("send_message", {
-          "text": messageText,
-          "sent_at": DateTime.now().toIso8601String(),
-          "sent_files": [],
-          "user_id": currentUserChatPage!.id,
-          "room": currentChat!.id
-        });
+        Future<void> sendMessage(String messageText) async {
+          String encryptedText = await encryptText(messageText)!;
 
-        widget.socket.emit("read_chat_history", {
-          "user_id": widget.currentUser!.id,
-          "chat_id": widget.chat.id
-        });
+          widget.socket.emit("send_message", {
+            "text": encryptedText,
+            "sent_at": DateTime.now().toIso8601String(),
+            "sent_files": [],
+            "user_id": currentUserChatPage!.id,
+            "room": currentChat!.id
+          });
+
+          widget.socket.emit("read_chat_history", {
+            "user_id": widget.currentUser!.id,
+            "chat_id": widget.chat.id
+          });
+        }
+
+        sendMessage(messageText);
       }
 
       _messageController.clear();
@@ -335,6 +352,9 @@ class ChatPageState extends State<ChatPage> {
     _scrollController.removeListener(_onScroll);
     _scrollController.removeListener(_scrollToBottom);
     _scrollController.dispose();
+
+
+
     super.dispose();
   }
 
