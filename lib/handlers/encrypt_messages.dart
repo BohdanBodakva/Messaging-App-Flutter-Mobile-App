@@ -15,17 +15,19 @@ import 'dart:math' as math;
 import 'package:socket_io_client/socket_io_client.dart';
 
 
-var keyPair;
-var serverPublicKey;
+// var keyPair;
+// var serverPublicKey;
 
 Future<void> generateKeyPair(Socket socket) async {  
   final keyPair1 = await _generateRSAkeyPair(2048);
-  keyPair = keyPair1;
+
+  await saveKeyPair(keyPair1);
+  // keyPair = keyPair1;
   
   await _exchangePublicKeys(socket);
 
-  print("Client key pair generated: ${keyPair != null}");
-  print("Server public key received: ${serverPublicKey != null}");
+  // print("Client key pair generated: ${keyPair != null}");
+  // print("Server public key received: ${serverPublicKey != null}");
 }
 
 Future<AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>> _generateRSAkeyPair(int bitLength) async {
@@ -58,6 +60,8 @@ Future<AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>> _generateRSAkeyPair(int b
 }
 
 Future<void> _exchangePublicKeys(Socket socket) async {
+  final keyPair = await loadKeyPair();
+
   if (keyPair == null) return;
   
   try {    
@@ -65,17 +69,23 @@ Future<void> _exchangePublicKeys(Socket socket) async {
     final publicKeyPem = _encodePublicKeyToPem(keyPair!.publicKey);
 
     // Set up listener for server response before emitting
-    socket.once("exchange_keys_response", (data) {
+    socket.once("exchange_keys_response", (data) async {
       print("Received key exchange response from server");
       
       if (data['server_public_key'] != null) {
-        serverPublicKey = data['server_public_key'];
+        final serverPublicKey = data['server_public_key'];
         // print("Server public key received (first 50 chars): ${serverPublicKey!.substring(0, math.min(50, serverPublicKey!.length))}");
         
+        
+
         // Immediately test if we can parse it
         final parsedKey = _parseServerPublicKey(serverPublicKey!);
         if (parsedKey != null) {
           print("Successfully parsed server public key");
+
+          await saveDataToStorage("serverPublicKey", serverPublicKey);
+
+          print("SAVED KEY____________: ${getDataFromStorage("serverPublicKey")}");
         } else {
           print("Failed to parse server public key");
         }
@@ -176,7 +186,9 @@ RSAPublicKey? _parseServerPublicKey(String pemString) {
   }
 }
 
-String? encryptText(String text) {
+Future<String?> encryptText(String text) async {
+  final serverPublicKey = await getDataFromStorage("serverPublicKey");
+
   if (serverPublicKey == null) {
     print("Server public key is null. Cannot encrypt message.");
     return null;
@@ -202,7 +214,9 @@ String? encryptText(String text) {
   }
 }
 
-String? decryptText(Uint8List encryptedData) {
+Future<String?> decryptText(Uint8List encryptedData) async {
+  final keyPair = await loadKeyPair();
+
   if (keyPair == null || keyPair!.privateKey == null) {
     print("Private key is null. Cannot decrypt message.");
     return null;

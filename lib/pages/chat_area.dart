@@ -109,8 +109,8 @@ class ChatPageState extends State<ChatPage> {
     
     _loadChatHistory();
 
-    print("KEY 2222222222222222222: ${serverPublicKey}");
-    print("KEY 3333333333333333333: ${keyPair!.publicKey}");
+    // print("KEY 2222222222222222222: ${serverPublicKey}");
+    // print("KEY 3333333333333333333: ${keyPair!.publicKey}");
   }
 
   _loadChatHistory(){
@@ -193,9 +193,12 @@ class ChatPageState extends State<ChatPage> {
       }
     });
 
-    widget.socket.on('send_message', (data) {
+    widget.socket.on('send_message', (data) async {
       final message = Message.fromJson(data['message']);
-      message.text = decryptText(Uint8List.fromList(utf8.encode(message.text!)));
+
+      if (!widget.chatWithAI) {
+        message.text = await decryptText(Uint8List.fromList(utf8.encode(message.text!)));
+      }
 
       final room = data['room'];
 
@@ -300,7 +303,10 @@ class ChatPageState extends State<ChatPage> {
         }); 
       } else {
         Future<void> sendMessage(String messageText) async {
-          String encryptedText = await encryptText(messageText)!;
+          String encryptedText = messageText;
+          if (!widget.chatWithAI) {
+            encryptedText = (await encryptText(messageText))!;
+          }
 
           widget.socket.emit("send_message", {
             "text": encryptedText,
@@ -415,7 +421,10 @@ class ChatPageState extends State<ChatPage> {
                     children: [
                       Text(
                         isGroup ? chatName : "${otherUsers![0].name} ${otherUsers![0].surname}", 
-                        style: const TextStyle(fontSize: 18)
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.black,
+                        )
                       ),
                       if (isTyping)
                         Text(
@@ -511,9 +520,9 @@ class ChatPageState extends State<ChatPage> {
                 margin: const EdgeInsets.only(right: 14.0),
                 child: CircleAvatar(
                   radius: 20,
-                  backgroundImage: otherUsers![0].profilePhotoLink != null && !otherUsers![0].profilePhotoLink!.contains("assets/letter_images")
+                  backgroundImage: isGroup ? AssetImage("assets/letter_images/group.png") as ImageProvider<Object> : (otherUsers![0].profilePhotoLink != null && !otherUsers![0].profilePhotoLink!.contains("assets/letter_images")
                     ? NetworkImage(otherUsers![0].profilePhotoLink!)  as ImageProvider<Object>
-                    : AssetImage(otherUsers?[0].profilePhotoLink ?? "assets/letter_images/u.png") as ImageProvider<Object>,
+                    : AssetImage(otherUsers?[0].profilePhotoLink ?? "assets/letter_images/u.png") as ImageProvider<Object>),
                 ),
                 )
               ],
@@ -727,7 +736,6 @@ class ChatMessageItem extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                               color: isMyMessage ? Colors.white : Colors.black,
                               fontSize: 14,
-                              backgroundColor: Color.fromARGB(255, 51, 51, 51),
                             ),
                           ),
                         ),

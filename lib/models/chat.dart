@@ -23,7 +23,7 @@ class Chat {
   })  : id = id ?? -1,
         adminId = adminId ?? -1,
         users = users ?? [],
-        chatPhotoLink = chatPhotoLink ?? "assets/letter_images/${name.isNotEmpty ? name[0].toLowerCase() : "g"}.png",
+        chatPhotoLink = chatPhotoLink ?? "assets/letter_images/${name.isNotEmpty ? name[0].toLowerCase() : "group"}.png",
         messages = messages ?? [];
 
   factory Chat.fromJson(Map<String, dynamic> json) {

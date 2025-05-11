@@ -170,8 +170,11 @@ class ChatListPageState extends State<ChatListPage> with WidgetsBindingObserver 
     socket.on('validate_token_error', navigateToLogin);
     socket.on('load_user_error', navigateToLogin);
 
-    socket.on("exchange_keys", (data) {
-      serverPublicKey = data["server_public_key"];
+    socket.on("exchange_keys", (data) async {
+      final serverPublicKey = data["server_public_key"];
+      await saveDataToStorage("serverPublicKey", serverPublicKey);
+
+      print("SAVED KEY____________: ${getDataFromStorage("serverPublicKey")}");
     });
 
     socket.on('validate_token', (data) {
@@ -211,7 +214,7 @@ class ChatListPageState extends State<ChatListPage> with WidgetsBindingObserver 
 
     socket.on("send_message_chat_list", (data) async {
       final message = Msg.Message.fromJson(data['message']);
-      message.text = decryptText(Uint8List.fromList(utf8.encode(message.text!)));
+      message.text = await decryptText(Uint8List.fromList(utf8.encode(message.text!)));
 
       final chat = Chat.fromJson(data['chat']);
       final userThatSend = User.fromJson(data['user_that_send']);
@@ -816,7 +819,6 @@ class ChatListPageState extends State<ChatListPage> with WidgetsBindingObserver 
                                     children: [
                                       CircleAvatar(
                                         radius: 25,
-                                        // backgroundImage: AssetImage(user.profilePhotoLink ?? "assets/letter_images/u.png"),
                                         backgroundImage: user.profilePhotoLink != null && !user.profilePhotoLink!.contains("assets/letter_images") 
                                           ? NetworkImage(user.profilePhotoLink!) as ImageProvider<Object>
                                           : AssetImage(user.profilePhotoLink!) as ImageProvider<Object>,
@@ -851,6 +853,11 @@ class ChatListPageState extends State<ChatListPage> with WidgetsBindingObserver 
                         return GestureDetector(
                           behavior: HitTestBehavior.translucent,
                           onTap: () async {
+                            socket.emit("read_chat_history", {
+                              "user_id": currentUser!.id,
+                              "chat_id": chat.id
+                            });
+
                             setState(() {
                               selectedChatId = chat.id;
                             });
@@ -923,9 +930,7 @@ class ChatItem extends StatelessWidget {
       leading: CircleAvatar(
         radius: 30,
         backgroundImage: chat!.isGroup == true 
-          ? (chat?.chatPhotoLink != null && !chat!.chatPhotoLink!.contains("assets/letter_images") 
-              ? NetworkImage(chat!.chatPhotoLink!) as ImageProvider<Object>
-              : AssetImage(chat?.chatPhotoLink ?? "assets/letter_images/g.png") as ImageProvider<Object>)
+          ? (AssetImage("assets/letter_images/group.png") as ImageProvider<Object>)
           : (otherUsers[0].profilePhotoLink != null && !otherUsers[0].profilePhotoLink!.contains("assets/letter_images") 
               ? NetworkImage(otherUsers[0].profilePhotoLink!) as ImageProvider<Object>
               : AssetImage(otherUsers[0].profilePhotoLink ?? "assets/letter_images/u.png") as ImageProvider<Object>),

@@ -332,7 +332,7 @@ class NewGroupPageState extends State<NewGroupPage> {
                 onTap: () { /* _pickGroupImage */ },
                 child: const CircleAvatar(
                   radius: 50,
-                  backgroundImage: AssetImage('assets/letter_images/g.png'),
+                  backgroundImage: AssetImage('assets/letter_images/group.png'),
                     // _groupImage != null ? 
                   //   (isAdmin == true ? FileImage(_groupImage!) as ImageProvider : const AssetImage('assets/letter_images/g.png')) : 
                 ),
@@ -401,7 +401,7 @@ class NewGroupPageState extends State<NewGroupPage> {
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
-                        children: _foundUsers.map((user) {
+                        children: _foundUsers.where((u) => u.id != 1).map((user) {
                           return GestureDetector(
                             onTap: () {_selectUser(user);},
                             child: Padding(
