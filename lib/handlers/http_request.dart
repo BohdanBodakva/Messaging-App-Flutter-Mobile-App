@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:messaging_app/handlers/shared_prefs.dart';
 
-const backendUrl = "http://xxx:5001";
+const backendUrl = "http://mylb-1629095195.us-east-1.elb.amazonaws.com:5001";
+// const backendUrl = "http://192.168.0.104:5001";
 
 Future makeRequestToBackend(String method, String url, body, Map<String, String> headers) async {
   method = method.toUpperCase();
